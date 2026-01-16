@@ -85,11 +85,50 @@ nav a:hover {
 .name {
     color: var(--color-texto);
     font-family: var(--font-script);
-    font-size: 7rem;
+    font-size: 5rem;
     font-weight: 200;
+    text-shadow: 0 0 10px var(--color-texto);
 }
+
+p {
+    font-size: 1.6rem;
+}
+
+.botones {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.botones a {
+    text-decoration: none;
+    color: var(--color-texto);
+    font-weight: bold;
+    padding: 1.2rem 2rem;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+.botones a:hover {
+    background-color: var(--color-primario);
+}
+
+
+
+.botones .brillante:hover {
+    background-color:beige;
+    color: var(--color-primario);
+}
+
+
 /* --- PERFIL --- */
+main {
+    max-width: 80%;
+    margin: 1.5rem auto;
+}
 .parent {
+width: 100%;
 display: grid;
 grid-template-columns: repeat(7, 1fr);
 grid-template-rows: repeat(8, 1fr);
