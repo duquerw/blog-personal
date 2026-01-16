@@ -1,0 +1,118 @@
+/* --- VARIABLES --- */
+:root {
+    --color-primario: #120a1f;
+    --color-secundario: #1a102e;
+    --color-texto: #e9d5ff;
+    --color-texto-secundario: #8975ca;
+    --border-radius: 25px;
+    --gap: 20px;
+    /* DEFINICIÓN DE FUENTES */
+    --font-titulo: 'Space Grotesk', sans-serif;
+    --font-cuerpo: 'Inter', sans-serif;
+    --font-script: 'Neonderthaw', cursive; /* Para detalles elegantes */
+    --font-code: 'Fira Code', monospace;     /* Para cosas tech */
+}
+html {
+    /* Esto hace que 1rem sea igual a 10px matemáticamente, 
+       pero manteniendo la escalabilidad */
+    font-size: 62.5%; 
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-cuerpo);
+    background-color: var(--color-primario);
+    color: var(--color-texto);
+    font-size: 1.6rem;
+}
+
+/* --- HEADER --- */
+header {
+    max-width: 80%;
+    background-color: var(--color-secundario);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin: 1.5rem auto;
+}
+
+nav{
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--color-texto);
+    font-weight: bold;
+    padding: 1.2rem 2rem;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+
+nav a:hover {
+    background-color: var(--color-primario);
+}
+
+/* --- BIENVENIDA --- */
+.bienvenida {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-secundario);
+    border-radius: var(--border-radius);
+    max-width: 80%;
+    height: 80vh;
+    margin: 1.5rem auto;
+}
+
+.texto-bienvenida {
+    text-align: center; 
+}
+
+.name {
+    color: var(--color-texto);
+    font-family: var(--font-script);
+    font-size: 7rem;
+    font-weight: 200;
+}
+/* --- PERFIL --- */
+.parent {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+grid-template-rows: repeat(8, 1fr);
+grid-column-gap: 10px;
+grid-row-gap: 10px;
+}
+
+.presentacion { grid-area: 1 / 1 / 4 / 5; }
+.personalidad { grid-area: 2 / 5 / 5 / 8; }
+.habilidades { grid-area: 4 / 1 / 6 / 5; }
+.experiencia { grid-area: 6 / 1 / 8 / 5; }
+.educacion { grid-area: 5 / 5 / 9 / 8; }
+
+.presentacion,
+.personalidad,
+.habilidades,
+.experiencia,
+.educacion {
+    background-color: #1a102e; /* Un poco más claro que el fondo */
+    border-radius: var(--border-radius);
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+
