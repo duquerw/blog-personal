@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duque OS - Dashboard Cloud</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ESTILOS (Mismos que antes) */
+        :root { --bg-dark: #0f0b15; --panel: #1a1425; --accent: #a78bfa; --text: #e2e8f0; --success: #34d399; }
+        body { background-color: var(--bg-dark); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; }
+        
+        .xp-container { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 30px; }
+        
+        .form-group { margin-bottom: 15px; }
+        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 5px; font-family: 'Inter', sans-serif; }
+        
+        .btn-save { background: var(--success); width: 100%; padding: 12px; cursor: pointer; border: none; font-weight: bold; border-radius: 5px; font-size: 1rem; }
+        .btn-save:hover { opacity: 0.9; }
+
+        /* Tarjetas de Posts */
+        .post-card { background: var(--panel); padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--accent); border-radius: 8px; }
+        .post-meta { color: #888; font-size: 0.85rem; margin-bottom: 8px; font-family: 'Fira Code', monospace; }
+        .xp-badge { float: right; color: var(--success); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="xp-container">
+        <h2>Duque Dashboard <span style="color:var(--accent)">Online</span></h2>
+        <p>Estado: <span id="dbStatus" style="color:#aaa">Conectando...</span> 🟢</p>
+    </div>
+
+    <div class="xp-container">
+        <h3>📝 Nueva Entrada (Blog / Diario)</h3>
+        <form id="postForm">
+            <div class="form-group">
+                <input type="text" id="titulo" placeholder="Título del Post" required>
+            </div>
+            
+            <div class="form-group">
+                <input list="categorias" id="categoria" placeholder="Categoría (Escribe o selecciona...)" required>
+                <datalist id="categorias">
+                    <option value="Tecnología">
+                    <option value="Relaciones Internacionales">
+                    <option value="Diario">
+                    <option value="Proyectos">
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <textarea id="texto" rows="6" placeholder="Escribe tu contenido aquí..." required></textarea>
+            </div>
+            
+            <button type="submit" class="btn-save" id="btnPublicar">PUBLICAR EN LA NUBE ☁️</button>
+        </form>
+    </div>
+
+    <h3>Historial de Entradas</h3>
+    <div id="postsContainer">Cargando posts...</div>
+
+    <script>
+        // --- 1. CONFIGURACIÓN SUPABASE ---
+        // ¡PEGA AQUÍ TUS MISMAS CLAVES QUE USASTE EN BIBLIOTECA!
+        const supabaseUrl = 'https://jkbgqlreqyumttezmysu.supabase.co' 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprYmdxbHJlcXl1bXR0ZXpteXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NzgzMzcsImV4cCI6MjA4NDI1NDMzN30.kpnzcb30AFZuALP3pzQH62i12hsTKh3E6vYkggJ0XI4'
+        
+        // Usamos 'db' para mantener la consistencia con tus otros archivos
+        const db = supabase.createClient(supabaseUrl, supabaseKey)
+
+        // Verificamos conexión al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dbStatus').innerText = "Conectado a Base de Datos";
+            document.getElementById('dbStatus').style.color = "#34d399";
+            cargarPosts(); // Leer posts existentes al iniciar
+        });
+
+        // --- FUNCIÓN 1: PUBLICAR (GUARDAR) ---
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnPublicar');
+            btn.innerText = "Subiendo...";
+            btn.disabled = true;
+
+            const titulo = document.getElementById('titulo').value;
+            const categoria = document.getElementById('categoria').value;
+            const texto = document.getElementById('texto').value;
+            
+            // Calculamos XP: 50 base + 1 punto por cada 10 letras
+            const xpCalculado = Math.floor(texto.length / 10) + 50;
+
+            // ENVIAR A SUPABASE (Tabla 'posts')
+            const { error } = await db
+                .from('posts')
+                .insert([
+                    { 
+                        titulo: titulo,
+                        categoria: categoria,
+                        texto: texto,
+                        xp_value: xpCalculado,
+                        autor: "Duque R. Wesche" // Puedes cambiar esto si quieres
+                    }
+                ])
+
+            if (error) {
+                console.error('Error:', error);
+                alert("Error al subir: " + error.message);
+                btn.innerText = "INTENTAR DE NUEVO";
+                btn.disabled = false;
+            } else {
+                alert(`¡Publicado con éxito! Ganaste +${xpCalculado} XP`);
+                e.target.reset(); // Limpiar formulario
+                btn.innerText = "PUBLICAR EN LA NUBE ☁️";
+                btn.disabled = false;
+                cargarPosts(); // Recargar la lista para ver el nuevo
+            }
+        });
+
+        // --- FUNCIÓN 2: LEER (MOSTRAR) ---
+        async function cargarPosts() {
+            const container = document.getElementById('postsContainer');
+            
+            // PEDIR DATOS A SUPABASE
+            let { data: posts, error } = await db
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false }) // Los más nuevos primero
+
+            if (error) {
+                container.innerHTML = 'Error cargando posts: ' + error.message;
+            } else {
+                if (posts.length === 0) {
+                    container.innerHTML = '<p style="color:#777">No hay entradas aún. ¡Escribe la primera!</p>';
+                    return;
+                }
+
+                container.innerHTML = ''; // Limpiar el "Cargando..."
+                
+                posts.forEach(post => {
+                    // Formatear fecha
+                    const fecha = new Date(post.created_at).toLocaleDateString();
+
+                    // Crear tarjeta HTML
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    card.innerHTML = `
+                        <div class="post-meta">
+                            ${fecha} | <span style="color:var(--accent)">${post.categoria}</span>
+                            <span class="xp-badge">+${post.xp_value} XP</span>
+                        </div>
+                        <h3 style="margin: 0 0 10px 0">${post.titulo}</h3>
+                        <p style="white-space: pre-wrap;">${post.texto}</p>
+                        <small style="color:#555">Autor: ${post.autor}</small>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

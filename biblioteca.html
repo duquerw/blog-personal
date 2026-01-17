@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duque Library</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* ESTILOS (Dark Mode & Clean) */
+        :root { --bg: #0f0b15; --panel: #1a1425; --accent: #a78bfa; --text: #e2e8f0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* FORMULARIO */
+        .book-form { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 30px; position: relative; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--accent); font-size: 0.9rem; }
+        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 5px; }
+        
+        /* AUTOCOMPLETADO (La lista flotante) */
+        #sugerencias {
+            position: absolute; background: #222; width: 95%; max-height: 200px; overflow-y: auto;
+            border: 1px solid var(--accent); z-index: 10; display: none; border-radius: 0 0 10px 10px;
+        }
+        .sugerencia-item { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #333; }
+        .sugerencia-item:hover { background: #333; }
+        .sugerencia-item img { width: 30px; height: 45px; object-fit: cover; }
+
+        /* PREVISUALIZACIÓN DE LIBRO SELECCIONADO */
+        .libro-seleccionado { display: flex; gap: 15px; background: rgba(167, 139, 250, 0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px; display: none; }
+        .libro-seleccionado img { width: 60px; height: 90px; object-fit: cover; border-radius: 5px; }
+        
+        /* GRID DE LIBROS (CARDS) */
+        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .book-card { background: var(--panel); border-radius: 10px; overflow: hidden; border: 1px solid #333; transition: transform 0.2s; display: flex; flex-direction: column; }
+        .book-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .book-cover { width: 100%; height: 300px; object-fit: cover; }
+        .book-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .stars { color: gold; margin-bottom: 5px; }
+        .dates { font-size: 0.8rem; color: #888; margin-top: auto; padding-top: 10px; }
+
+        .btn-save { background: var(--accent); color: #000; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📚 Biblioteca Personal <span id="loading" style="display:none; font-size:0.5em">Guardando...</span></h2>
+
+    <div class="book-form">
+        <h3>Registrar Lectura</h3>
+        
+        <div class="form-group" style="position:relative">
+            <label>Buscar Título del Libro (Google Books)</label>
+            <input type="text" id="buscador" placeholder="Escribe para buscar..." autocomplete="off">
+            <div id="sugerencias"></div>
+        </div>
+
+        <div id="preview" class="libro-seleccionado">
+            <img id="coverPreview" src="" alt="Portada">
+            <div>
+                <strong id="titlePreview" style="color:var(--accent)"></strong><br>
+                <small id="authorPreview"></small>
+                <p id="descPreview" style="font-size:0.8rem; color:#aaa; margin-top:5px; height: 40px; overflow:hidden;">...</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tu Calificación</label>
+            <select id="calificacion">
+                <option value="5">⭐⭐⭐⭐⭐ (Obra Maestra)</option>
+                <option value="4">⭐⭐⭐⭐ (Muy Bueno)</option>
+                <option value="3">⭐⭐⭐ (Regular)</option>
+                <option value="2">⭐⭐ (Malo)</option>
+                <option value="1">⭐ (Terrible)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Tu Opinión (Opcional)</label>
+            <textarea id="opinion" rows="3" placeholder="¿Qué aprendiste? ¿Qué te pareció?"></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px">
+            <div class="form-group" style="flex:1">
+                <label>Inicio</label>
+                <input type="date" id="fechaInicio">
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Término</label>
+                <input type="date" id="fechaFin">
+            </div>
+        </div>
+
+        <button id="btnGuardar" class="btn-save" disabled>SELECCIONA UN LIBRO PRIMERO</button>
+    </div>
+
+    <div id="libraryGrid" class="library-grid">
+        Cargando biblioteca...
+    </div>
+</div>
+
+<script>
+    // --- 1. CONFIGURACIÓN SUPABASE ---
+    const supabaseUrl = 'https://jkbgqlreqyumttezmysu.supabase.co'
+    // Tu clave anon publica (la que ya tenías)
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprYmdxbHJlcXl1bXR0ZXpteXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NzgzMzcsImV4cCI6MjA4NDI1NDMzN30.kpnzcb30AFZuALP3pzQH62i12hsTKh3E6vYkggJ0XI4'
+    
+    // CORRECCIÓN AQUÍ: Le llamamos 'db' en vez de 'supabase' para no chocar nombres
+    const db = supabase.createClient(supabaseUrl, supabaseKey)
+
+    // Variables globales
+    let libroSeleccionado = null;
+
+    // --- 2. LÓGICA DE GOOGLE BOOKS API ---
+    const inputBusqueda = document.getElementById('buscador');
+    const sugerenciasDiv = document.getElementById('sugerencias');
+
+    inputBusqueda.addEventListener('input', async (e) => {
+        const query = e.target.value;
+        if (query.length === 0) { sugerenciasDiv.style.display = 'none'; return; }
+        if (query.length < 3) return;
+
+        console.log("Buscando:", query);
+
+        try {
+            const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=5`);
+            const data = await res.json();
+
+            if (data.items) {
+                sugerenciasDiv.innerHTML = '';
+                sugerenciasDiv.style.display = 'block';
+                
+                data.items.forEach(book => {
+                    const info = book.volumeInfo;
+                    // Fix https
+                    let rawCover = info.imageLinks?.thumbnail || '';
+                    if (rawCover.startsWith('http://')) rawCover = rawCover.replace('http://', 'https://');
+                    const cover = rawCover || 'https://via.placeholder.com/128x196?text=Sin+Portada';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'sugerencia-item';
+                    item.innerHTML = `<img src="${cover}"><div><strong>${info.title}</strong><br><small>${info.authors ? info.authors[0] : 'Desconocido'}</small></div>`;
+                    
+                    item.onclick = () => seleccionarLibro(info, cover);
+                    sugerenciasDiv.appendChild(item);
+                });
+            } else {
+                sugerenciasDiv.style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Error API:", error);
+        }
+    });
+
+    function seleccionarLibro(info, coverUrl) {
+        libroSeleccionado = {
+            titulo: info.title,
+            autor: info.authors ? info.authors[0] : 'Desconocido',
+            descripcion: info.description || 'Sin descripción.',
+            portada: coverUrl
+        };
+        document.getElementById('buscador').value = info.title;
+        document.getElementById('sugerencias').style.display = 'none';
+        document.getElementById('preview').style.display = 'flex';
+        document.getElementById('coverPreview').src = coverUrl;
+        document.getElementById('titlePreview').innerText = info.title;
+        document.getElementById('authorPreview').innerText = info.authors ? info.authors[0] : '';
+        document.getElementById('descPreview').innerText = info.description ? info.description.substring(0, 150) + "..." : "";
+        
+        const btn = document.getElementById('btnGuardar');
+        btn.disabled = false;
+        btn.innerText = "GUARDAR EN MI BIBLIOTECA (+100 XP)";
+    }
+
+    // --- 3. GUARDAR (Usando 'db' en vez de 'supabase') ---
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+        if (!libroSeleccionado) return;
+        const btn = document.getElementById('btnGuardar');
+        btn.innerText = "Guardando...";
+
+        const { error } = await db.from('libros').insert([{
+            titulo: libroSeleccionado.titulo,
+            autor: libroSeleccionado.autor,
+            descripcion: libroSeleccionado.descripcion,
+            portada_url: libroSeleccionado.portada,
+            calificacion: document.getElementById('calificacion').value,
+            opinion: document.getElementById('opinion').value,
+            fecha_inicio: document.getElementById('fechaInicio').value || null,
+            fecha_fin: document.getElementById('fechaFin').value || null,
+            xp_value: 100
+        }]);
+
+        if (error) {
+            alert('Error: ' + error.message);
+            btn.innerText = "INTENTAR DE NUEVO";
+        } else {
+            alert('¡Guardado!');
+            location.reload(); 
+        }
+    });
+
+    // --- 4. CARGAR (Usando 'db' en vez de 'supabase') ---
+    async function cargarBiblioteca() {
+        const grid = document.getElementById('libraryGrid');
+        
+        const { data: libros, error } = await db
+            .from('libros')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            grid.innerHTML = "Error cargando datos.";
+            return;
+        }
+
+        if (libros && libros.length > 0) {
+            grid.innerHTML = '';
+            libros.forEach(libro => {
+                const estrellas = '⭐'.repeat(libro.calificacion);
+                const fInicio = libro.fecha_inicio ? new Date(libro.fecha_inicio).toLocaleDateString() : '?';
+                const fFin = libro.fecha_fin ? new Date(libro.fecha_fin).toLocaleDateString() : 'Leyendo...';
+
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.innerHTML = `
+                    <img src="${libro.portada_url}" class="book-cover">
+                    <div class="book-info">
+                        <div class="stars">${estrellas}</div>
+                        <h3>${libro.titulo}</h3>
+                        <small style="color:var(--accent)">${libro.autor}</small>
+                        <p style="font-size:0.85rem; color:#ccc; margin-top:10px; font-style:italic;">"${libro.opinion || ''}"</p>
+                        <div class="dates">${fInicio} ➔ ${fFin}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } else {
+            grid.innerHTML = "Biblioteca vacía.";
+        }
+    }
+
+    cargarBiblioteca();
+
+    document.addEventListener('click', (e) => {
+        if (e.target.id !== 'buscador') sugerenciasDiv.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>

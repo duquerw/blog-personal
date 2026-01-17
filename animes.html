@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duque Anime List</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ESTILOS (Cyber-Otaku Mode) */
+        :root { --bg: #0f0b15; --panel: #1a1425; --accent: #f472b6; /* Rosa Anime */ --text: #e2e8f0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* FORMULARIO */
+        .anime-form { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 30px; position: relative; border-left: 4px solid var(--accent); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--accent); font-size: 0.9rem; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 5px; }
+
+        /* SUGERENCIAS (JIKAN API) */
+        #sugerencias { position: absolute; background: #222; width: 95%; max-height: 250px; overflow-y: auto; border: 1px solid var(--accent); z-index: 100; display: none; border-radius: 0 0 10px 10px; }
+        .sugerencia-item { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #333; transition: 0.2s; }
+        .sugerencia-item:hover { background: #333; padding-left: 15px; }
+        .sugerencia-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
+
+        /* PREVIEW */
+        .anime-preview { display: flex; gap: 20px; background: rgba(244, 114, 182, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; align-items: center; }
+        .anime-preview img { width: 80px; height: 120px; object-fit: cover; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        /* GRID */
+        .anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .anime-card { background: var(--panel); border-radius: 12px; overflow: hidden; border: 1px solid #333; position: relative; transition: transform 0.2s; }
+        .anime-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        
+        .anime-cover { width: 100%; height: 180px; object-fit: cover; object-position: center top; }
+        .anime-info { padding: 15px; }
+        
+        /* BARRA DE PROGRESO */
+        .progress-bg { background: #333; height: 6px; border-radius: 3px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.5s; box-shadow: 0 0 5px var(--accent); }
+        
+        .status-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-save { background: var(--accent); color: #000; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-save:disabled { background: #555; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⛩️ Anime Tracker <span style="font-size:0.5em; color:#777">Powered by Jikan API</span></h2>
+
+    <div class="anime-form">
+        <h3>Registrar Anime</h3>
+        
+        <div class="form-group" style="position:relative">
+            <label>Buscar Anime (Escribe en Japonés o Inglés)</label>
+            <input type="text" id="buscador" placeholder="Ej: Kimetsu no Yaiba, Naruto..." autocomplete="off">
+            <div id="sugerencias"></div>
+        </div>
+
+        <div id="preview" class="anime-preview">
+            <img id="coverPreview" src="">
+            <div>
+                <h3 id="titlePreview" style="margin:0; color:var(--accent)"></h3>
+                <small id="episodesPreview" style="color:#aaa"></small>
+                <p id="synopsisPreview" style="font-size:0.8rem; margin-top:5px; display:-webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"></p>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:15px;">
+            <div class="form-group" style="flex:1">
+                <label>Estado</label>
+                <select id="estado">
+                    <option value="Viendo">📺 Viendo</option>
+                    <option value="Completado">✅ Completado</option>
+                    <option value="Pausado">⏸️ Pausado</option>
+                    <option value="Dropeado">❌ Dropeado</option>
+                    <option value="Planeado">📅 Planeado</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Calificación</label>
+                <select id="calificacion">
+                    <option value="10">10 - Obra Maestra</option>
+                    <option value="9">9 - Increíble</option>
+                    <option value="8">8 - Muy Bueno</option>
+                    <option value="7">7 - Bueno</option>
+                    <option value="6">6 - Pasable</option>
+                    <option value="5">5 - Regular</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:15px;">
+            <div class="form-group" style="flex:1">
+                <label>Episodios Vistos</label>
+                <input type="number" id="epsVistos" value="0" min="0">
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Total Episodios</label>
+                <input type="number" id="epsTotal" readonly style="background:#222; color:#777; cursor:not-allowed">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Opinión Personal</label>
+            <textarea id="opinion" rows="2" placeholder="¿Qué tal la animación? ¿La historia?"></textarea>
+        </div>
+
+        <button id="btnGuardar" class="btn-save" disabled>Busca un anime primero</button>
+    </div>
+
+    <div id="animeGrid" class="anime-grid">
+        Cargando tu lista de animes...
+    </div>
+</div>
+
+<script>
+    // --- 1. CONEXIÓN SUPABASE ---
+    const supabaseUrl = 'https://jkbgqlreqyumttezmysu.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprYmdxbHJlcXl1bXR0ZXpteXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2NzgzMzcsImV4cCI6MjA4NDI1NDMzN30.kpnzcb30AFZuALP3pzQH62i12hsTKh3E6vYkggJ0XI4'
+    const db = supabase.createClient(supabaseUrl, supabaseKey)
+
+    // Variables globales
+    let animeSeleccionado = null;
+
+    // --- 2. JIKAN API (Buscador) ---
+    const input = document.getElementById('buscador');
+    const sugerencias = document.getElementById('sugerencias');
+
+    input.addEventListener('input', async (e) => {
+        const q = e.target.value;
+        if (q.length < 3) { sugerencias.style.display = 'none'; return; }
+
+        try {
+            // API de Jikan (MyAnimeList)
+            const res = await fetch(`https://api.jikan.moe/v4/anime?q=${q}&limit=5`);
+            const data = await res.json();
+
+            if (data.data) {
+                sugerencias.innerHTML = '';
+                sugerencias.style.display = 'block';
+
+                data.data.forEach(anime => {
+                    const item = document.createElement('div');
+                    item.className = 'sugerencia-item';
+                    item.innerHTML = `
+                        <img src="${anime.images.jpg.image_url}">
+                        <div>
+                            <strong>${anime.title}</strong><br>
+                            <small>${anime.episodes || '?'} Eps | ${anime.year || 'N/A'}</small>
+                        </div>
+                    `;
+                    item.onclick = () => seleccionarAnime(anime);
+                    sugerencias.appendChild(item);
+                });
+            }
+        } catch (err) { console.error(err); }
+    });
+
+    function seleccionarAnime(anime) {
+        animeSeleccionado = {
+            titulo: anime.title,
+            portada: anime.images.jpg.large_image_url,
+            total_episodios: anime.episodes || 0, // 0 si es indefinido (One Piece)
+            synopsis: anime.synopsis
+        };
+
+        // Rellenar UI
+        document.getElementById('buscador').value = anime.title;
+        document.getElementById('sugerencias').style.display = 'none';
+        
+        document.getElementById('preview').style.display = 'flex';
+        document.getElementById('coverPreview').src = animeSeleccionado.portada;
+        document.getElementById('titlePreview').innerText = anime.title;
+        document.getElementById('episodesPreview').innerText = (anime.episodes || '?') + " Episodios";
+        document.getElementById('synopsisPreview').innerText = anime.synopsis;
+
+        // Auto-rellenar total episodios
+        document.getElementById('epsTotal').value = anime.episodes || 0;
+        
+        // Activar botón
+        const btn = document.getElementById('btnGuardar');
+        btn.disabled = false;
+        btn.innerText = "GUARDAR ANIME (+XP)";
+    }
+
+    // --- 3. GUARDAR ---
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+        if (!animeSeleccionado) return;
+        
+        const epsVistos = document.getElementById('epsVistos').value;
+        const epsTotal = document.getElementById('epsTotal').value;
+        
+        // Calcular XP: 20 puntos por episodio visto + 50 base
+        const xpGanada = (epsVistos * 20) + 50;
+
+        const { error } = await db.from('animes').insert([{
+            titulo: animeSeleccionado.titulo,
+            portada_url: animeSeleccionado.portada,
+            total_episodios: epsTotal,
+            episodios_vistos: epsVistos,
+            estado: document.getElementById('estado').value,
+            calificacion: document.getElementById('calificacion').value,
+            opinion: document.getElementById('opinion').value,
+            xp_value: xpGanada
+        }]);
+
+        if (error) alert('Error: ' + error.message);
+        else {
+            alert(`¡Anime Guardado! Ganaste ${xpGanada} XP`);
+            location.reload();
+        }
+    });
+
+    // --- 4. CARGAR LISTA ---
+    async function cargarAnimes() {
+        const grid = document.getElementById('animeGrid');
+        const { data: animes, error } = await db
+            .from('animes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (animes) {
+            grid.innerHTML = '';
+            animes.forEach(anime => {
+                // Lógica de Barra de Progreso
+                let porcentaje = 0;
+                let textoProgreso = `${anime.episodios_vistos} / ${anime.total_episodios || '?'}`;
+                
+                if (anime.total_episodios > 0) {
+                    porcentaje = (anime.episodios_vistos / anime.total_episodios) * 100;
+                    if(porcentaje > 100) porcentaje = 100;
+                } else {
+                    // Si no tiene total (ej. One Piece), llenamos un poco si ha visto algo
+                    porcentaje = anime.episodios_vistos > 0 ? 50 : 0; 
+                }
+
+                // Color de estado
+                let colorEstado = '#f472b6'; // Rosa por defecto
+                if(anime.estado === 'Completado') colorEstado = '#34d399'; // Verde
+                if(anime.estado === 'Dropeado') colorEstado = '#ef4444'; // Rojo
+
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.innerHTML = `
+                    <div class="status-badge" style="background:${colorEstado}">${anime.estado}</div>
+                    <img src="${anime.portada_url}" class="anime-cover">
+                    <div class="anime-info">
+                        <h4 style="margin:0 0 5px 0">${anime.titulo}</h4>
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#aaa">
+                            <span>⭐ ${anime.calificacion}/10</span>
+                            <span>XP: ${anime.xp_value}</span>
+                        </div>
+                        
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width:${porcentaje}%; background:${colorEstado}"></div>
+                        </div>
+                        <div style="font-size:0.8rem; text-align:right; color:#fff">
+                            ${textoProgreso} Eps
+                        </div>
+
+                        ${anime.opinion ? `<p style="font-size:0.85rem; color:#ccc; margin-top:10px; font-style:italic">"${anime.opinion}"</p>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+    }
+
+    cargarAnimes();
+
+    // Cerrar click fuera
+    document.addEventListener('click', (e) => {
+        if (e.target.id !== 'buscador') sugerencias.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
