@@ -9,14 +9,18 @@
     /* DEFINICIÓN DE FUENTES */
     --font-titulo: 'Space Grotesk', sans-serif;
     --font-cuerpo: 'Inter', sans-serif;
-    --font-script: 'Neonderthaw', cursive; /* Para detalles elegantes */
-    --font-code: 'Fira Code', monospace;     /* Para cosas tech */
+    --font-script: 'Neonderthaw', cursive;
+    /* Para detalles elegantes */
+    --font-code: 'Fira Code', monospace;
+    /* Para cosas tech */
 }
+
 html {
     /* Esto hace que 1rem sea igual a 10px matemáticamente, 
        pero manteniendo la escalabilidad */
-    font-size: 62.5%; 
+    font-size: 62.5%;
 }
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -39,7 +43,7 @@ header {
     margin: 1.5rem auto;
 }
 
-nav{
+nav {
     max-width: 100%;
     display: flex;
     justify-content: center;
@@ -79,7 +83,7 @@ nav a:hover {
 }
 
 .texto-bienvenida {
-    text-align: center; 
+    text-align: center;
 }
 
 .name {
@@ -117,7 +121,7 @@ p {
 
 
 .botones .brillante:hover {
-    background-color:beige;
+    background-color: beige;
     color: var(--color-primario);
 }
 
@@ -127,31 +131,232 @@ main {
     max-width: 80%;
     margin: 1.5rem auto;
 }
+
 .parent {
-width: 100%;
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-grid-template-rows: repeat(8, 1fr);
-grid-column-gap: 10px;
-grid-row-gap: 10px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
 }
 
-.presentacion { grid-area: 1 / 1 / 4 / 5; }
-.personalidad { grid-area: 2 / 5 / 5 / 8; }
-.habilidades { grid-area: 4 / 1 / 6 / 5; }
-.experiencia { grid-area: 6 / 1 / 8 / 5; }
-.educacion { grid-area: 5 / 5 / 9 / 8; }
+.presentacion {
+    grid-area: 1 / 1 / 4 / 5;
+}
+
+.personalidad {
+    grid-area: 2 / 5 / 5 / 8;
+}
+
+.habilidades {
+    grid-area: 4 / 1 / 6 / 5;
+}
+
+.experiencia {
+    grid-area: 6 / 1 / 8 / 5;
+}
+
+.educacion {
+    grid-area: 5 / 5 / 9 / 8;
+}
 
 .presentacion,
 .personalidad,
 .habilidades,
 .experiencia,
 .educacion {
-    background-color: #1a102e; /* Un poco más claro que el fondo */
+    background-color: #1a102e;
+    /* Un poco más claro que el fondo */
     border-radius: var(--border-radius);
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 
+
+/* --- BLOG --- */
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
+.blog-card {
+    background-color: #1a102e;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-texto-secundario);
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-tag {
+    background-color: var(--color-texto-secundario);
+    color: var(--color-primario);
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    align-self: flex-start;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.card-title {
+    font-family: var(--font-titulo);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-texto);
+}
+
+.card-date {
+    font-family: var(--font-code);
+    font-size: 1.2rem;
+    color: rgba(233, 213, 255, 0.6);
+    margin-bottom: 1.5rem;
+}
+
+.card-summary {
+    font-size: 1.4rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    flex-grow: 1;
+}
+
+.card-link {
+    display: inline-block;
+    color: var(--color-texto-secundario);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.4rem;
+    transition: color 0.3s ease;
+}
+
+.card-link:hover {
+    color: var(--color-texto);
+}
+
+
+/* --- ARTICULO COMPLETO --- */
+.post-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+}
+
+.post-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 2rem;
+}
+
+.post-tag {
+    display: inline-block;
+    background-color: var(--color-texto-secundario);
+    color: var(--color-primario);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+.post-title {
+    font-family: var(--font-titulo);
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.post-date {
+    font-family: var(--font-code);
+    color: rgba(233, 213, 255, 0.6);
+    font-size: 1.4rem;
+}
+
+.post-body {
+    font-size: 1.8rem;
+    line-height: 1.8;
+}
+
+.post-body p {
+    margin-bottom: 2rem;
+}
+
+.post-body h2 {
+    font-family: var(--font-titulo);
+    color: var(--color-texto-secundario);
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+}
+
+.post-body ul {
+    margin-bottom: 2rem;
+    padding-left: 2rem;
+}
+
+.post-body li {
+    margin-bottom: 0.5rem;
+}
+
+.post-body pre {
+    background-color: #0d0616;
+    padding: 1.5rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 2rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.post-body code {
+    font-family: var(--font-code);
+    color: #ff79c6;
+}
+
+.post-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-back {
+    display: inline-block;
+    color: var(--color-texto);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 1rem 2rem;
+    border: 1px solid var(--color-texto-secundario);
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background-color: var(--color-texto-secundario);
+    color: var(--color-primario);
+}
+
+.post-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
