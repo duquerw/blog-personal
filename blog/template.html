@@ -4,7 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{TITULO}} - Blog</title>
+    <title>[TITULO-DEL-POST] | Blog de Duque</title>
+    <meta name="description" content="[BREVE-DESCRIPCION-DEL-POST]">
+    <meta name="author" content="Duque">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://duquerw.github.io/blog-personal/blog/[SLUG-DEL-POST].html">
+    <meta property="og:image" content="https://duquerw.github.io/blog-personal/assets/images/[IMAGEN]">
+
+    <!-- Structured Data Placeholder -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "[TITULO-DEL-POST]",
+      "image": "https://duquerw.github.io/blog-personal/assets/images/[IMAGEN]",
+      "author": {
+        "@type": "Person",
+        "name": "Duque"
+      },
+      "datePublished": "[FECHA-YYYY-MM-DD]",
+      "description": "[BREVE-DESCRIPCION]"
+    }
+    </script>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
